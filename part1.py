@@ -1,6 +1,7 @@
 import numpy as np
 from scipy import integrate
 import visualization as vz
+import matplotlib.pyplot as plt
 
 NUM_STEP = 575
 FPS = 144
@@ -137,4 +138,30 @@ def case_1m():
     sol = integrate.solve_ivp(system, t_span, x0, t_eval = t_eval, args = (u_s, u_d))
     vz.animate(sol.t, sol.y[0], sol.y[1], sol.y[2], u_s_array, u_d_array, "Magie de la Team Pekka 1M", FPS)
     
-case_1m()
+def systemInputsVariables(t, state_variables, u_s, u_d):
+    step = min(int(t / ((t_end - t_start) / NUM_STEP)), NUM_STEP - 1)
+    
+    x, y, phi, x_dot, y_dot, phi_dot = state_variables
+    
+    x_ddot = - u_s[step] / m * np.sin(phi)
+    
+    y_ddot = u_s[step] / m * np.cos(phi) - g
+    
+    phi_ddot = l / (2 * inertia) * u_d[step]
+    
+    return [x_dot, y_dot, phi_dot, x_ddot, y_ddot, phi_ddot]
+    
+def case_noisy():
+    u_s = m * g + 0.223
+    u_d = 0
+    
+    mean = 0
+    std = 1
+
+    u_s_array = np.random.normal(mean, std, NUM_STEP) + u_s
+    u_d_array = np.random.normal(mean, std, NUM_STEP) + u_d
+    
+    sol = integrate.solve_ivp(systemInputsVariables, t_span, x0, t_eval = t_eval, args = (u_s_array, u_d_array))
+    vz.animate(sol.t, sol.y[0], sol.y[1], sol.y[2], u_s_array, u_d_array, "Magie de la Team Pekka Noisy", FPS)
+    
+case_noisy()

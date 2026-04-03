@@ -3,6 +3,8 @@ from scipy import integrate
 import visualization as vz
 import matplotlib.pyplot as plt
 
+#----------------------------------------QUESTION 1.6----------------------------------------
+
 NUM_STEP = 575
 FPS = 144
 
@@ -127,6 +129,8 @@ def linear_case_3():
     
     sol = integrate.solve_ivp(linear_system, t_span, x0, t_eval = t_eval, args = (u_s, u_d))
     vz.animate(sol.t, sol.y[0], sol.y[1], sol.y[2], u_s_array, u_d_array, "Magie de la Brigade du Kiff 3", FPS)
+    
+#----------------------------------------QUESTION 1.7----------------------------------------
 
 
 def case_1m():
@@ -137,6 +141,8 @@ def case_1m():
     
     sol = integrate.solve_ivp(system, t_span, x0, t_eval = t_eval, args = (u_s, u_d))
     vz.animate(sol.t, sol.y[0], sol.y[1], sol.y[2], u_s_array, u_d_array, "Magie de la Team Pekka 1M", FPS)
+    
+#----------------------------------------QUESTION 2.1----------------------------------------
     
 def systemInputsVariables(t, state_variables, u_s, u_d):
     step = min(int(t / ((t_end - t_start) / NUM_STEP)), NUM_STEP - 1)

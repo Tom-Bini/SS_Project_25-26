@@ -170,4 +170,22 @@ def case_noisy():
     sol = integrate.solve_ivp(systemInputsVariables, t_span, x0, t_eval = t_eval, args = (u_s_array, u_d_array))
     vz.animate(sol.t, sol.y[0], sol.y[1], sol.y[2], u_s_array, u_d_array, "Magie de la Team Pekka Noisy", FPS)
     
-case_noisy()
+#----------------------------------------QUESTION 2.2----------------------------------------
+#Position:
+x = None
+y = None
+phi = None
+
+#Position de référence:
+x_ref = None
+y_ref = None
+phi_ref = None
+
+#Gains (> 0):
+k_x = None
+k_y = None
+k_phi = None
+
+u_s = m * (g + k_y * (y_ref - y))
+phi_ref = - 1/g * k_x * (x_ref - x)
+u_d = 2 * inertia / l * k_phi * (phi_ref - phi)

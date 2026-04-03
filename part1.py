@@ -127,10 +127,14 @@ def linear_case_3():
     sol = integrate.solve_ivp(linear_system, t_span, x0, t_eval = t_eval, args = (u_s, u_d))
     vz.animate(sol.t, sol.y[0], sol.y[1], sol.y[2], u_s_array, u_d_array, "Magie de la Brigade du Kiff 3", FPS)
 
-case_1()
-case_2()
-case_3()
-linear_case_1()
-linear_case_2()
-linear_case_3()
-case_conclusion()
+
+def case_1m():
+    u_s = m * g + 0.223
+    u_d = 0
+    u_s_array = np.full(NUM_STEP, u_s)
+    u_d_array = np.full(NUM_STEP, u_d)
+    
+    sol = integrate.solve_ivp(system, t_span, x0, t_eval = t_eval, args = (u_s, u_d))
+    vz.animate(sol.t, sol.y[0], sol.y[1], sol.y[2], u_s_array, u_d_array, "Magie de la Team Pekka 1M", FPS)
+    
+case_1m()

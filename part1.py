@@ -2,7 +2,7 @@ import numpy as np
 from scipy import integrate
 import visualization as vz
 
-NUM_STEP = 100000
+NUM_STEP = 575
 FPS = 144
 
 t_start = 0

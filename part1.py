@@ -40,7 +40,7 @@ def case_1():
     u_d_array = np.full(NUM_STEP, u_d)
     
     sol = integrate.solve_ivp(system, t_span, x0, t_eval = t_eval, args = (u_s, u_d))
-    vz.animate(sol.t, sol.y[0], sol.y[1], sol.y[2], u_s_array, u_d_array, "Magie de la Team Pekka 1", FPS)
+    vz.animate(sol.t, sol.y[0], sol.y[1], sol.y[2], u_s_array, u_d_array, "Système non-linéaire, Cas 1", FPS)
     
 def case_2():
     u_s = m * g
@@ -49,7 +49,7 @@ def case_2():
     u_d_array = np.full(NUM_STEP, u_d)
     
     sol = integrate.solve_ivp(system, t_span, x0, t_eval = t_eval, args = (u_s, u_d))
-    vz.animate(sol.t, sol.y[0], sol.y[1], sol.y[2], u_s_array, u_d_array, "Magie de la Team Pekka 2", FPS)
+    vz.animate(sol.t, sol.y[0], sol.y[1], sol.y[2], u_s_array, u_d_array, "Système non-linéaire, Cas 2", FPS)
 
 def case_3():
     u_s = m * g
@@ -58,17 +58,7 @@ def case_3():
     u_d_array = np.full(NUM_STEP, u_d)
     
     sol = integrate.solve_ivp(system, t_span, x0, t_eval = t_eval, args = (u_s, u_d))
-    vz.animate(sol.t, sol.y[0], sol.y[1], sol.y[2], u_s_array, u_d_array, "Magie de la Team Pekka 3", FPS)
-    
-def case_conclusion():
-    x0 = np.array([0, 0, np.pi/180, 0, 0, 0])
-    u_s = m * g
-    u_d = 0
-    u_s_array = np.full(NUM_STEP, u_s)
-    u_d_array = np.full(NUM_STEP, u_d)
-    
-    sol = integrate.solve_ivp(system, t_span, x0, t_eval = t_eval, args = (u_s, u_d))
-    vz.animate(sol.t, sol.y[0], sol.y[1], sol.y[2], u_s_array, u_d_array, "Magie de la Team Pekka Conclus", FPS)
+    vz.animate(sol.t, sol.y[0], sol.y[1], sol.y[2], u_s_array, u_d_array, "Système non-linéaire, Cas 3", FPS)
 
 def linear_system(t, state_variables, u_s, u_d):
     x, y, phi, x_dot, y_dot, phi_dot = state_variables
@@ -110,7 +100,7 @@ def linear_case_1():
     u_d_array = np.full(NUM_STEP, u_d)
     
     sol = integrate.solve_ivp(linear_system, t_span, x0, t_eval = t_eval, args = (u_s, u_d))
-    vz.animate(sol.t, sol.y[0], sol.y[1], sol.y[2], u_s_array, u_d_array, "Magie de la Brigade du Kiff 1", FPS)
+    vz.animate(sol.t, sol.y[0], sol.y[1], sol.y[2], u_s_array, u_d_array, "Système linéaire, Cas 1", FPS)
     
 def linear_case_2():
     u_s = m * g
@@ -119,7 +109,7 @@ def linear_case_2():
     u_d_array = np.full(NUM_STEP, u_d)
     
     sol = integrate.solve_ivp(linear_system, t_span, x0, t_eval = t_eval, args = (u_s, u_d))
-    vz.animate(sol.t, sol.y[0], sol.y[1], sol.y[2], u_s_array, u_d_array, "Magie de la Brigade du Kiff 2", FPS)
+    vz.animate(sol.t, sol.y[0], sol.y[1], sol.y[2], u_s_array, u_d_array, "Système linéaire, Cas 2", FPS)
 
 def linear_case_3():
     u_s = m * g
@@ -128,10 +118,21 @@ def linear_case_3():
     u_d_array = np.full(NUM_STEP, u_d)
     
     sol = integrate.solve_ivp(linear_system, t_span, x0, t_eval = t_eval, args = (u_s, u_d))
-    vz.animate(sol.t, sol.y[0], sol.y[1], sol.y[2], u_s_array, u_d_array, "Magie de la Brigade du Kiff 3", FPS)
+    vz.animate(sol.t, sol.y[0], sol.y[1], sol.y[2], u_s_array, u_d_array, "Système linéaire, Cas 3", FPS)
     
 #----------------------------------------QUESTION 1.7----------------------------------------
 
+def case_conclusion():
+    x0 = np.array([0, 0, np.pi/180, 0, 0, 0])
+    u_s = m * g
+    u_d = 0
+    u_s_array = np.full(NUM_STEP, u_s)
+    u_d_array = np.full(NUM_STEP, u_d)
+    
+    sol = integrate.solve_ivp(system, t_span, x0, t_eval = t_eval, args = (u_s, u_d))
+    vz.animate(sol.t, sol.y[0], sol.y[1], sol.y[2], u_s_array, u_d_array, "Système non-linéaire, test stabilité", FPS)
+    
+#----------------------------------------QUESTION 2.1----------------------------------------
 
 def case_1m():
     u_s = m * g + 0.223
@@ -140,9 +141,7 @@ def case_1m():
     u_d_array = np.full(NUM_STEP, u_d)
     
     sol = integrate.solve_ivp(system, t_span, x0, t_eval = t_eval, args = (u_s, u_d))
-    vz.animate(sol.t, sol.y[0], sol.y[1], sol.y[2], u_s_array, u_d_array, "Magie de la Team Pekka 1M", FPS)
-    
-#----------------------------------------QUESTION 2.1----------------------------------------
+    vz.animate(sol.t, sol.y[0], sol.y[1], sol.y[2], u_s_array, u_d_array, "Système non-linéaire", FPS)
     
 def systemInputsVariables(t, state_variables, u_s, u_d):
     step = min(int(t / ((t_end - t_start) / NUM_STEP)), NUM_STEP - 1)
@@ -168,7 +167,7 @@ def case_noisy():
     u_d_array = np.random.normal(mean, std, NUM_STEP) + u_d
     
     sol = integrate.solve_ivp(systemInputsVariables, t_span, x0, t_eval = t_eval, args = (u_s_array, u_d_array))
-    vz.animate(sol.t, sol.y[0], sol.y[1], sol.y[2], u_s_array, u_d_array, "Magie de la Team Pekka Noisy", FPS)
+    vz.animate(sol.t, sol.y[0], sol.y[1], sol.y[2], u_s_array, u_d_array, "Système non-linéaire avec bruit gaussien", FPS)
     
 #----------------------------------------QUESTION 2.2----------------------------------------
 #Position:

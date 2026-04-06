@@ -188,3 +188,43 @@ k_phi = None
 u_s = m * (g + k_y * (y_ref - y))
 phi_ref = - 1/g * k_x * (x_ref - x)
 u_d = 2 * inertia / l * k_phi * (phi_ref - phi)
+
+#----------------------------------------QUESTION 2.3----------------------------------------
+
+matrix_A = np.zeros((6, 6))
+
+matrix_A[0,3] = 1
+matrix_A[1,4] = 1
+matrix_A[2,5] = 1
+
+matrix_A[3,2] = - u_s / m * np.cos(phi)
+matrix_A[4,2] = - u_s / m * np.sin(phi)
+
+matrix_B = np.zeros((6, 2))
+
+matrix_B[3,0] = - np.sin(phi) / m
+matrix_B[4,0] = np.cos(phi) / m
+matrix_B[5,1] = l / (2 * inertia)
+
+matrix_C = np.zeros((2, 6))
+
+matrix_C[0,0] = 1
+matrix_C[1,1] = 1
+
+matrix_D = np.zeros((2,2))
+
+matrix_K = np.zeros((2, 6))
+
+matrix_K[0][1] = m * k_y
+matrix_K[1][0] = -2 * inertia * k_phi * k_x / (g * l)
+matrix_K[1][2] = 2 * inertia * k_phi / l
+
+matrix_Kr = np.zeros((2, 2))
+
+matrix_Kr[0][1] = m * k_y
+matrix_Kr[1][0] = -2 * inertia * k_phi * k_x / (g * l)
+
+matrix_A_tilde = matrix_A - matrix_B @ matrix_K
+matrix_B_tilde = matrix_B @ matrix_Kr
+matrix_C_tilde = matrix_C - matrix_D @ matrix_K
+matrix_D_tilde = matrix_D @ matrix_Kr

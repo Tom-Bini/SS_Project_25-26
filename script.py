@@ -227,46 +227,30 @@ eigenvalues_matrix_A_tilde = matrix_A_tilde_sp.eigenvals()
 r = 1.0 #m
 omega = 0.2 #rad/s
 
-def linear_feedbacked_system(t, state_variables, k_x, k_y, k_phi):
+def linear_feedbacked_system(t, state_variables, k_x, k_y, k_phi, mean, std, u_s_array, u_d_array):
     x, y, phi, x_dot, y_dot, phi_dot = state_variables
+    
+    step = min(int(t / ((t_end - t_start) / NUM_STEP)), NUM_STEP - 1)
+    
     x_ref = r * np.cos(omega * t)
     y_ref = r * np.sin(omega * t) + 1.5
-
-    matrix_A = np.zeros((6, 6))
-
-    matrix_A[0,3] = 1
-    matrix_A[1,4] = 1
-    matrix_A[2,5] = 1
-
-    matrix_A[3,2] = - g
-
-    matrix_B = np.zeros((6, 2))
-
-    matrix_B[4,0] = 1 / m
-    matrix_B[5,1] = l / (2 * inertia)
-
-    matrix_K = np.zeros((2,6))
-
-    matrix_K[0,1] = m * k_y
-    matrix_K[1,0] = -2 * inertia * k_phi * k_x / (g * l)
-    matrix_K[1,2] = 2 * inertia * k_phi / l
-
-    matrix_Kr = np.zeros((2, 2))
-
-    matrix_Kr[0,1] = m * k_y
-    matrix_Kr[1,0] = -2 * inertia * k_phi * k_x / (g * l)
-
-    matrix_A_tilde = matrix_A - (matrix_B * matrix_K)
-
-    matrix_B_tilde = matrix_B @ matrix_Kr
-
-    matrix_state = np.array([x, y, phi, x_dot, y_dot, phi_dot])
     
-    matrix_input = np.array([x_ref, y_ref])
-
-    dxdt = matrix_A_tilde @ matrix_state + matrix_B_tilde @ matrix_input
+    u_s = m * (g + k_y * (y_ref - y))
+    u_d = 2 * inertia / l * k_phi * (- 1/g * k_x * (x_ref - x) - phi)
     
-    return dxdt
+    u_s_noisy = u_s + np.random.normal(mean, std)
+    u_d_noisy = u_d + np.random.normal(mean, std)
+    
+    u_s_array[step] = u_s_noisy
+    u_d_array[step] = u_d_noisy
+
+    x_ddot = - u_s / m * np.sin(phi)
+    
+    y_ddot = u_s / m * np.cos(phi) - g
+    
+    phi_ddot = l / (2 * inertia) * u_d
+    
+    return [x_dot, y_dot, phi_dot, x_ddot, y_ddot, phi_ddot]
 
 def q2_5_case1():
     k_x = 3
@@ -280,7 +264,14 @@ def q2_5_case1():
     t_end = 10 * np.pi
     t_span = (t_start, t_end)
     t_eval = np.linspace(t_start, t_end, NUM_STEP)
-    sol = integrate.solve_ivp(linear_feedbacked_system, t_span, x0, t_eval = t_eval, args = (k_x, k_y, k_phi, u_s, u_d))
+    
+    u_s_array = np.zeros(NUM_STEP)
+    u_d_array = np.zeros(NUM_STEP)
+    
+    sol = integrate.solve_ivp(linear_feedbacked_system, t_span, x0, t_eval = t_eval, args = (k_x, k_y, k_phi, mean, std, u_s_array, u_d_array))
+    vz.animate(sol.t, sol.y[0], sol.y[1], sol.y[2], u_s_array, u_d_array, "Système non-linéaire traj circu", FPS)
+    
+q2_5_case1()
     
 def q2_5_case2():
     k_x = 3
@@ -294,7 +285,11 @@ def q2_5_case2():
     t_end = 10 * np.pi
     t_span = (t_start, t_end)
     t_eval = np.linspace(t_start, t_end, NUM_STEP)
-    sol = integrate.solve_ivp(linear_feedbacked_system, t_span, x0, t_eval = t_eval, args = (k_x, k_y, k_phi))
+    
+    u_s_array = np.zeros(NUM_STEP)
+    u_d_array = np.zeros(NUM_STEP)
+    
+    sol = integrate.solve_ivp(linear_feedbacked_system, t_span, x0, t_eval = t_eval, args = (k_x, k_y, k_phi, mean, std, u_s_array, u_d_array))
     
 def q2_5_case3():
     k_x = 3
@@ -308,7 +303,11 @@ def q2_5_case3():
     t_end = 10 * np.pi
     t_span = (t_start, t_end)
     t_eval = np.linspace(t_start, t_end, NUM_STEP)
-    sol = integrate.solve_ivp(linear_feedbacked_system, t_span, x0, t_eval = t_eval, args = (k_x, k_y, k_phi))
+        
+    u_s_array = np.zeros(NUM_STEP)
+    u_d_array = np.zeros(NUM_STEP)
+    
+    sol = integrate.solve_ivp(linear_feedbacked_system, t_span, x0, t_eval = t_eval, args = (k_x, k_y, k_phi, mean, std, u_s_array, u_d_array))
     
 def q2_5_case4():
     k_x = 10
@@ -322,7 +321,11 @@ def q2_5_case4():
     t_end = 10 * np.pi
     t_span = (t_start, t_end)
     t_eval = np.linspace(t_start, t_end, NUM_STEP)
-    sol = integrate.solve_ivp(linear_feedbacked_system, t_span, x0, t_eval = t_eval, args = (k_x, k_y, k_phi))
+        
+    u_s_array = np.zeros(NUM_STEP)
+    u_d_array = np.zeros(NUM_STEP)
+    
+    sol = integrate.solve_ivp(linear_feedbacked_system, t_span, x0, t_eval = t_eval, args = (k_x, k_y, k_phi, mean, std, u_s_array, u_d_array))
     
 def q2_5_case5():
     k_x = 10
@@ -336,7 +339,11 @@ def q2_5_case5():
     t_end = 10 * np.pi
     t_span = (t_start, t_end)
     t_eval = np.linspace(t_start, t_end, NUM_STEP)
-    sol = integrate.solve_ivp(linear_feedbacked_system, t_span, x0, t_eval = t_eval, args = (k_x, k_y, k_phi))
+        
+    u_s_array = np.zeros(NUM_STEP)
+    u_d_array = np.zeros(NUM_STEP)
+    
+    sol = integrate.solve_ivp(linear_feedbacked_system, t_span, x0, t_eval = t_eval, args = (k_x, k_y, k_phi, mean, std, u_s_array, u_d_array))
     
 def q2_5_case6():
     k_x = 10
@@ -350,4 +357,8 @@ def q2_5_case6():
     t_end = 10 * np.pi
     t_span = (t_start, t_end)
     t_eval = np.linspace(t_start, t_end, NUM_STEP)
-    sol = integrate.solve_ivp(linear_feedbacked_system, t_span, x0, t_eval = t_eval, args = (k_x, k_y, k_phi))
+        
+    u_s_array = np.zeros(NUM_STEP)
+    u_d_array = np.zeros(NUM_STEP)
+    
+    sol = integrate.solve_ivp(linear_feedbacked_system, t_span, x0, t_eval = t_eval, args = (k_x, k_y, k_phi, mean, std, u_s_array, u_d_array))

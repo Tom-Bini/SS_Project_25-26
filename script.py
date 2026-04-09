@@ -168,66 +168,12 @@ def case_noisy():
     sol = integrate.solve_ivp(systemInputsVariables, t_span, x0, t_eval = t_eval, args = (u_s_array, u_d_array))
     vz.animate(sol.t, sol.y[0], sol.y[1], sol.y[2], u_s_array, u_d_array, "Système non-linéaire avec bruit gaussien", FPS)
     
-#----------------------------------------QUESTION 2.2----------------------------------------
-#Position:
-x, y, phi, x_ref, y_ref, phi_ref, k_x, k_y, k_phi = sp.symbols("x y phi x_ref y_ref phi_ref k_x k_y k_phi")
-l, m, inertia, g = sp.symbols("l m inertia g")
-
-u_s = m * (g + k_y * (y_ref - y))
-u_d = 2 * inertia / l * k_phi * (- 1/g * k_x * (x_ref - x) - phi)
-
-#----------------------------------------QUESTION 2.3----------------------------------------
-
-matrix_A = sp.zeros(6, 6)
-
-matrix_A[0,3] = 1
-matrix_A[1,4] = 1
-matrix_A[2,5] = 1
-
-matrix_A[3,2] = - g
-
-matrix_B = sp.zeros(6, 2)
-
-matrix_B[4,0] = 1 / m
-matrix_B[5,1] = l / (2 * inertia)
-
-matrix_C = sp.zeros(2, 6)
-
-matrix_C[0,0] = 1
-matrix_C[1,1] = 1
-
-matrix_D = sp.zeros(2,2)
-
-matrix_K = sp.zeros(2,6)
-
-matrix_K[0,1] = m * k_y
-matrix_K[1,0] = -2 * inertia * k_phi * k_x / (g * l)
-matrix_K[1,2] = 2 * inertia * k_phi / l
-sp.pprint(matrix_B)
-
-matrix_Kr = sp.zeros(2, 2)
-
-matrix_Kr[0,1] = m * k_y
-matrix_Kr[1,0] = -2 * inertia * k_phi * k_x / (g * l)
-
-matrix_A_tilde = matrix_A - (matrix_B * matrix_K)
-
-matrix_B_tilde = matrix_B * matrix_Kr
-matrix_C_tilde = matrix_C - matrix_D * matrix_K
-matrix_D_tilde = matrix_D * matrix_Kr
-
-#----------------------------------------QUESTION 2.4----------------------------------------
-
-matrix_A_tilde_sp = sp.Matrix(matrix_A_tilde)
-
-eigenvalues_matrix_A_tilde = matrix_A_tilde_sp.eigenvals()
-
 #----------------------------------------QUESTION 2.5----------------------------------------
 
 r = 1.0 #m
 omega = 0.2 #rad/s
 
-def linear_feedbacked_system(t, state_variables, k_x, k_y, k_phi, mean, std, u_s_array, u_d_array):
+def linear_feedbacked_system(t, state_variables, k_x, k_y, k_phi, mean, std):
     x, y, phi, x_dot, y_dot, phi_dot = state_variables
     
     step = min(int(t / ((t_end - t_start) / NUM_STEP)), NUM_STEP - 1)
@@ -238,17 +184,16 @@ def linear_feedbacked_system(t, state_variables, k_x, k_y, k_phi, mean, std, u_s
     u_s = m * (g + k_y * (y_ref - y))
     u_d = 2 * inertia / l * k_phi * (- 1/g * k_x * (x_ref - x) - phi)
     
-    u_s_noisy = u_s + np.random.normal(mean, std)
-    u_d_noisy = u_d + np.random.normal(mean, std)
-    
-    u_s_array[step] = u_s_noisy
-    u_d_array[step] = u_d_noisy
+    seed = int(t * 1000)
+   
+    u_s_noisy = u_s + np.random.default_rng(seed).normal(mean, std)
+    u_d_noisy = u_d + np.random.default_rng(seed + 1).normal(mean, std)
 
-    x_ddot = - u_s / m * np.sin(phi)
+    x_ddot = - u_s_noisy / m * np.sin(phi)
     
-    y_ddot = u_s / m * np.cos(phi) - g
+    y_ddot = u_s_noisy / m * np.cos(phi) - g
     
-    phi_ddot = l / (2 * inertia) * u_d
+    phi_ddot = l / (2 * inertia) * u_d_noisy
     
     return [x_dot, y_dot, phi_dot, x_ddot, y_ddot, phi_ddot]
 
@@ -265,11 +210,26 @@ def q2_5_case1():
     t_span = (t_start, t_end)
     t_eval = np.linspace(t_start, t_end, NUM_STEP)
     
-    u_s_array = np.zeros(NUM_STEP)
-    u_d_array = np.zeros(NUM_STEP)
+    sol = integrate.solve_ivp(linear_feedbacked_system, t_span, x0, t_eval = t_eval, args = (k_x, k_y, k_phi, mean, std))
     
-    sol = integrate.solve_ivp(linear_feedbacked_system, t_span, x0, t_eval = t_eval, args = (k_x, k_y, k_phi, mean, std, u_s_array, u_d_array))
-    vz.animate(sol.t, sol.y[0], sol.y[1], sol.y[2], u_s_array, u_d_array, "Système non-linéaire traj circu", FPS)
+    x_sol = sol.y[0]
+    y_sol = sol.y[1]
+    phi_sol = sol.y[2]
+    t_sol = sol.t
+    
+    x_ref = r * np.cos(omega * t_sol)
+    y_ref = r * np.sin(omega * t_sol) + 1.5
+    
+    u_s_array = m * (g + k_y * (y_ref - y_sol))
+    u_d_array = 2 * inertia / l * k_phi * (- 1/g * k_x * (x_ref - x_sol) - phi_sol)
+    
+    for i in range(len(t_sol)):
+        seed = int(t_sol[i] * 1000)
+        
+        u_s_array[i] += np.random.default_rng(seed).normal(mean, std)
+        u_d_array[i] += np.random.default_rng(seed + 1).normal(mean, std)
+    
+    vz.animate(t_sol, x_sol, y_sol, phi_sol, u_s_array, u_d_array, "Système non-linéaire traj circu", FPS)
     
 q2_5_case1()
     

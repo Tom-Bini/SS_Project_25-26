@@ -227,7 +227,7 @@ eigenvalues_matrix_A_tilde = matrix_A_tilde_sp.eigenvals()
 r = 1.0 #m
 omega = 0.2 #rad/s
 
-def linear_feedbacked_system(t, state_variables):
+def linear_feedbacked_system(t, state_variables, k_x, k_y, k_phi):
     x, y, phi, x_dot, y_dot, phi_dot = state_variables
     x_ref = r * np.cos(omega * t)
     y_ref = r * np.sin(omega * t) + 1.5
@@ -269,8 +269,85 @@ def linear_feedbacked_system(t, state_variables):
     return dxdt
 
 def q2_5_case1():
+    k_x = 3
+    k_y = 3
+    k_phi = 20
+    
+    mean = 0
+    std = 0
+    
     t_span = 0
     t_end = 10 * np.pi
     t_span = (t_start, t_end)
     t_eval = np.linspace(t_start, t_end, NUM_STEP)
-    sol = integrate.solve_ivp(linear_feedbacked_system, t_span, x0, t_eval = t_eval)
+    sol = integrate.solve_ivp(linear_feedbacked_system, t_span, x0, t_eval = t_eval, args = (k_x, k_y, k_phi, u_s, u_d))
+    
+def q2_5_case2():
+    k_x = 3
+    k_y = 3
+    k_phi = 20
+    
+    mean = 0
+    std = 0.01
+    
+    t_span = 0
+    t_end = 10 * np.pi
+    t_span = (t_start, t_end)
+    t_eval = np.linspace(t_start, t_end, NUM_STEP)
+    sol = integrate.solve_ivp(linear_feedbacked_system, t_span, x0, t_eval = t_eval, args = (k_x, k_y, k_phi))
+    
+def q2_5_case3():
+    k_x = 3
+    k_y = 3 
+    k_phi = 20
+    
+    mean = 0
+    std = 0.05 
+    
+    t_span = 0
+    t_end = 10 * np.pi
+    t_span = (t_start, t_end)
+    t_eval = np.linspace(t_start, t_end, NUM_STEP)
+    sol = integrate.solve_ivp(linear_feedbacked_system, t_span, x0, t_eval = t_eval, args = (k_x, k_y, k_phi))
+    
+def q2_5_case4():
+    k_x = 10
+    k_y = 10
+    k_phi = 40
+    
+    mean = 0
+    std = 0
+    
+    t_span = 0
+    t_end = 10 * np.pi
+    t_span = (t_start, t_end)
+    t_eval = np.linspace(t_start, t_end, NUM_STEP)
+    sol = integrate.solve_ivp(linear_feedbacked_system, t_span, x0, t_eval = t_eval, args = (k_x, k_y, k_phi))
+    
+def q2_5_case5():
+    k_x = 10
+    k_y = 10
+    k_phi = 40
+    
+    mean = 0
+    std = 0.01
+    
+    t_span = 0
+    t_end = 10 * np.pi
+    t_span = (t_start, t_end)
+    t_eval = np.linspace(t_start, t_end, NUM_STEP)
+    sol = integrate.solve_ivp(linear_feedbacked_system, t_span, x0, t_eval = t_eval, args = (k_x, k_y, k_phi))
+    
+def q2_5_case6():
+    k_x = 10
+    k_y = 10
+    k_phi = 40
+    
+    mean = 0
+    std = 0.05
+    
+    t_span = 0
+    t_end = 10 * np.pi
+    t_span = (t_start, t_end)
+    t_eval = np.linspace(t_start, t_end, NUM_STEP)
+    sol = integrate.solve_ivp(linear_feedbacked_system, t_span, x0, t_eval = t_eval, args = (k_x, k_y, k_phi))

@@ -172,6 +172,7 @@ def case_noisy():
 
 r = 1.0 #m
 omega = 0.2 #rad/s
+x0 = np.array([1, 1.5, 0, 0, 0, 0])
 
 def linear_feedbacked_system(t, state_variables, k_x, k_y, k_phi, mean, std):
     x, y, phi, x_dot, y_dot, phi_dot = state_variables
@@ -205,6 +206,48 @@ def q2_5_case1():
     mean = 0
     std = 0
     
+    t_start = 0
+    t_end = 10 * np.pi
+    t_span = (t_start, t_end)
+    t_eval = np.linspace(t_start, t_end, NUM_STEP)
+    
+    sol = integrate.solve_ivp(linear_feedbacked_system, t_span, x0, t_eval = t_eval, args = (k_x, k_y, k_phi, mean, std))
+    
+    x_sol = sol.y[0]
+    y_sol = sol.y[1]
+    phi_sol = sol.y[2]
+    t_sol = sol.t
+    
+    x_ref = r * np.cos(omega * t_sol)
+    y_ref = r * np.sin(omega * t_sol) + 1.5
+    
+    u_s_array = m * (g + k_y * (y_ref - y_sol))
+    u_d_array = 2 * inertia / l * k_phi * (- 1/g * k_x * (x_ref - x_sol) - phi_sol)
+    
+    for i in range(len(t_sol)):
+        seed = int(t_sol[i] * 1000)
+        
+        u_s_array[i] += np.random.default_rng(seed).normal(mean, std)
+        u_d_array[i] += np.random.default_rng(seed + 1).normal(mean, std)
+    
+    vz.animate(t_sol, x_sol, y_sol, phi_sol, u_s_array, u_d_array, "Q2.5 Cas 1", FPS)
+    
+    for i in range(NUM_STEP):
+        square_sum = 0
+        square_sum += (x_sol[i] - x_ref[i])**2 + (y_sol[i] - y_ref[i])**2
+    
+    rmse = np.sqrt(1/NUM_STEP * square_sum)
+    print(rmse)
+
+    
+def q2_5_case2():
+    k_x = 3
+    k_y = 3
+    k_phi = 20
+    
+    mean = 0
+    std = 0.01
+    
     t_span = 0
     t_end = 10 * np.pi
     t_span = (t_start, t_end)
@@ -229,45 +272,55 @@ def q2_5_case1():
         u_s_array[i] += np.random.default_rng(seed).normal(mean, std)
         u_d_array[i] += np.random.default_rng(seed + 1).normal(mean, std)
     
-    vz.animate(t_sol, x_sol, y_sol, phi_sol, u_s_array, u_d_array, "Système non-linéaire traj circu", FPS)
+    vz.animate(t_sol, x_sol, y_sol, phi_sol, u_s_array, u_d_array, "Q2.5 Cas 2", FPS)
     
-q2_5_case1()
+    for i in range(NUM_STEP):
+        square_sum = 0
+        square_sum += (x_sol[i] - x_ref[i])**2 + (y_sol[i] - y_ref[i])**2
     
-def q2_5_case2():
+    rmse = np.sqrt(1/NUM_STEP * square_sum)
+    print(rmse)
+    
+def q2_5_case3():
     k_x = 3
     k_y = 3
     k_phi = 20
     
     mean = 0
-    std = 0.01
+    std = 0.05
     
     t_span = 0
     t_end = 10 * np.pi
     t_span = (t_start, t_end)
     t_eval = np.linspace(t_start, t_end, NUM_STEP)
     
-    u_s_array = np.zeros(NUM_STEP)
-    u_d_array = np.zeros(NUM_STEP)
+    sol = integrate.solve_ivp(linear_feedbacked_system, t_span, x0, t_eval = t_eval, args = (k_x, k_y, k_phi, mean, std))
     
-    sol = integrate.solve_ivp(linear_feedbacked_system, t_span, x0, t_eval = t_eval, args = (k_x, k_y, k_phi, mean, std, u_s_array, u_d_array))
+    x_sol = sol.y[0]
+    y_sol = sol.y[1]
+    phi_sol = sol.y[2]
+    t_sol = sol.t
     
-def q2_5_case3():
-    k_x = 3
-    k_y = 3 
-    k_phi = 20
+    x_ref = r * np.cos(omega * t_sol)
+    y_ref = r * np.sin(omega * t_sol) + 1.5
     
-    mean = 0
-    std = 0.05 
+    u_s_array = m * (g + k_y * (y_ref - y_sol))
+    u_d_array = 2 * inertia / l * k_phi * (- 1/g * k_x * (x_ref - x_sol) - phi_sol)
     
-    t_span = 0
-    t_end = 10 * np.pi
-    t_span = (t_start, t_end)
-    t_eval = np.linspace(t_start, t_end, NUM_STEP)
+    for i in range(len(t_sol)):
+        seed = int(t_sol[i] * 1000)
         
-    u_s_array = np.zeros(NUM_STEP)
-    u_d_array = np.zeros(NUM_STEP)
+        u_s_array[i] += np.random.default_rng(seed).normal(mean, std)
+        u_d_array[i] += np.random.default_rng(seed + 1).normal(mean, std)
     
-    sol = integrate.solve_ivp(linear_feedbacked_system, t_span, x0, t_eval = t_eval, args = (k_x, k_y, k_phi, mean, std, u_s_array, u_d_array))
+    vz.animate(t_sol, x_sol, y_sol, phi_sol, u_s_array, u_d_array, "Q2.5 Cas 3", FPS)
+    
+    for i in range(NUM_STEP):
+        square_sum = 0
+        square_sum += (x_sol[i] - x_ref[i])**2 + (y_sol[i] - y_ref[i])**2
+    
+    rmse = np.sqrt(1/NUM_STEP * square_sum)
+    print(rmse)
     
 def q2_5_case4():
     k_x = 10
@@ -281,11 +334,34 @@ def q2_5_case4():
     t_end = 10 * np.pi
     t_span = (t_start, t_end)
     t_eval = np.linspace(t_start, t_end, NUM_STEP)
-        
-    u_s_array = np.zeros(NUM_STEP)
-    u_d_array = np.zeros(NUM_STEP)
     
-    sol = integrate.solve_ivp(linear_feedbacked_system, t_span, x0, t_eval = t_eval, args = (k_x, k_y, k_phi, mean, std, u_s_array, u_d_array))
+    sol = integrate.solve_ivp(linear_feedbacked_system, t_span, x0, t_eval = t_eval, args = (k_x, k_y, k_phi, mean, std))
+    
+    x_sol = sol.y[0]
+    y_sol = sol.y[1]
+    phi_sol = sol.y[2]
+    t_sol = sol.t
+    
+    x_ref = r * np.cos(omega * t_sol)
+    y_ref = r * np.sin(omega * t_sol) + 1.5
+    
+    u_s_array = m * (g + k_y * (y_ref - y_sol))
+    u_d_array = 2 * inertia / l * k_phi * (- 1/g * k_x * (x_ref - x_sol) - phi_sol)
+    
+    for i in range(len(t_sol)):
+        seed = int(t_sol[i] * 1000)
+        
+        u_s_array[i] += np.random.default_rng(seed).normal(mean, std)
+        u_d_array[i] += np.random.default_rng(seed + 1).normal(mean, std)
+    
+    vz.animate(t_sol, x_sol, y_sol, phi_sol, u_s_array, u_d_array, "Q2.5 Cas 4", FPS)
+    
+    for i in range(NUM_STEP):
+        square_sum = 0
+        square_sum += (x_sol[i] - x_ref[i])**2 + (y_sol[i] - y_ref[i])**2
+    
+    rmse = np.sqrt(1/NUM_STEP * square_sum)
+    print(rmse)
     
 def q2_5_case5():
     k_x = 10
@@ -299,11 +375,34 @@ def q2_5_case5():
     t_end = 10 * np.pi
     t_span = (t_start, t_end)
     t_eval = np.linspace(t_start, t_end, NUM_STEP)
-        
-    u_s_array = np.zeros(NUM_STEP)
-    u_d_array = np.zeros(NUM_STEP)
     
-    sol = integrate.solve_ivp(linear_feedbacked_system, t_span, x0, t_eval = t_eval, args = (k_x, k_y, k_phi, mean, std, u_s_array, u_d_array))
+    sol = integrate.solve_ivp(linear_feedbacked_system, t_span, x0, t_eval = t_eval, args = (k_x, k_y, k_phi, mean, std))
+    
+    x_sol = sol.y[0]
+    y_sol = sol.y[1]
+    phi_sol = sol.y[2]
+    t_sol = sol.t
+    
+    x_ref = r * np.cos(omega * t_sol)
+    y_ref = r * np.sin(omega * t_sol) + 1.5
+    
+    u_s_array = m * (g + k_y * (y_ref - y_sol))
+    u_d_array = 2 * inertia / l * k_phi * (- 1/g * k_x * (x_ref - x_sol) - phi_sol)
+    
+    for i in range(len(t_sol)):
+        seed = int(t_sol[i] * 1000)
+        
+        u_s_array[i] += np.random.default_rng(seed).normal(mean, std)
+        u_d_array[i] += np.random.default_rng(seed + 1).normal(mean, std)
+    
+    vz.animate(t_sol, x_sol, y_sol, phi_sol, u_s_array, u_d_array, "Q2.5 Cas 5", FPS)
+    
+    for i in range(NUM_STEP):
+        square_sum = 0
+        square_sum += (x_sol[i] - x_ref[i])**2 + (y_sol[i] - y_ref[i])**2
+    
+    rmse = np.sqrt(1/NUM_STEP * square_sum)
+    print(rmse)
     
 def q2_5_case6():
     k_x = 10
@@ -317,8 +416,38 @@ def q2_5_case6():
     t_end = 10 * np.pi
     t_span = (t_start, t_end)
     t_eval = np.linspace(t_start, t_end, NUM_STEP)
-        
-    u_s_array = np.zeros(NUM_STEP)
-    u_d_array = np.zeros(NUM_STEP)
     
-    sol = integrate.solve_ivp(linear_feedbacked_system, t_span, x0, t_eval = t_eval, args = (k_x, k_y, k_phi, mean, std, u_s_array, u_d_array))
+    sol = integrate.solve_ivp(linear_feedbacked_system, t_span, x0, t_eval = t_eval, args = (k_x, k_y, k_phi, mean, std))
+    
+    x_sol = sol.y[0]
+    y_sol = sol.y[1]
+    phi_sol = sol.y[2]
+    t_sol = sol.t
+    
+    x_ref = r * np.cos(omega * t_sol)
+    y_ref = r * np.sin(omega * t_sol) + 1.5
+    
+    u_s_array = m * (g + k_y * (y_ref - y_sol))
+    u_d_array = 2 * inertia / l * k_phi * (- 1/g * k_x * (x_ref - x_sol) - phi_sol)
+    
+    for i in range(len(t_sol)):
+        seed = int(t_sol[i] * 1000)
+        
+        u_s_array[i] += np.random.default_rng(seed).normal(mean, std)
+        u_d_array[i] += np.random.default_rng(seed + 1).normal(mean, std)
+    
+    vz.animate(t_sol, x_sol, y_sol, phi_sol, u_s_array, u_d_array, "Q2.5 Cas 6", FPS)
+    
+    for i in range(NUM_STEP):
+        square_sum = 0
+        square_sum += (x_sol[i] - x_ref[i])**2 + (y_sol[i] - y_ref[i])**2
+    
+    rmse = np.sqrt(1/NUM_STEP * square_sum)
+    print(rmse)
+    
+q2_5_case1()
+q2_5_case2()
+q2_5_case3()
+q2_5_case4()
+q2_5_case5()
+q2_5_case6()

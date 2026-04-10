@@ -177,8 +177,6 @@ x0 = np.array([1, 1.5, 0, 0, 0, 0])
 def linear_feedbacked_system(t, state_variables, k_x, k_y, k_phi, mean, std):
     x, y, phi, x_dot, y_dot, phi_dot = state_variables
     
-    step = min(int(t / ((t_end - t_start) / NUM_STEP)), NUM_STEP - 1)
-    
     x_ref = r * np.cos(omega * t)
     y_ref = r * np.sin(omega * t) + 1.5
     
@@ -444,10 +442,5 @@ def q2_5_case6():
     
     rmse = np.sqrt(1/NUM_STEP * square_sum)
     print(rmse)
-    
-q2_5_case1()
-q2_5_case2()
-q2_5_case3()
-q2_5_case4()
-q2_5_case5()
-q2_5_case6()
+
+#----------------------------------------QUESTION 2.6----------------------------------------

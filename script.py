@@ -465,9 +465,7 @@ def q2_6():
     plt.grid(which = "minor", alpha = 0.2, linestyle = ":")
     plt.minorticks_on()
     plt.savefig("q2.6.png")
-    
-q2_6()
-    
+        
 #----------------------------------------QUESTION 2.7----------------------------------------
 
 #Fréquences dominantes
@@ -513,7 +511,7 @@ def feedbacked_noisy_system(t, state_variables, k_x, k_y, k_phi):
 def q2_8():
     k_x = 11
     k_y = 11
-    k_phi = 70
+    k_phi = 44
     
     t_start = 0
     t_end = 10 * np.pi
@@ -546,6 +544,3 @@ def q2_8():
     rmse = np.sqrt(1/NUM_STEP * square_sum)
     print(rmse)
     vz.animate(t_sol, x_sol, y_sol, phi_sol, u_s_array, u_d_array, "Q2.8", FPS)
-    
-    
-q2_8()

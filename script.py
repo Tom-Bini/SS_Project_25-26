@@ -3,6 +3,7 @@ from scipy import integrate
 import visualization as vz
 import matplotlib.pyplot as plt
 import sympy as sp
+from scipy.interpolate import interp1d
 
 #----------------------------------------QUESTION 1.6----------------------------------------
 
@@ -42,7 +43,7 @@ def case_1():
     
     sol = integrate.solve_ivp(system, t_span, x0, t_eval = t_eval, args = (u_s, u_d))
     vz.animate(sol.t, sol.y[0], sol.y[1], sol.y[2], u_s_array, u_d_array, "Système non-linéaire, Cas 1", FPS)
-    
+
 def case_2():
     u_s = m * g
     u_d = 0.01
@@ -61,6 +62,7 @@ def case_3():
     sol = integrate.solve_ivp(system, t_span, x0, t_eval = t_eval, args = (u_s, u_d))
     vz.animate(sol.t, sol.y[0], sol.y[1], sol.y[2], u_s_array, u_d_array, "Système non-linéaire, Cas 3", FPS)
 
+
 def linear_system(t, state_variables, u_s, u_d):
     x, y, phi, x_dot, y_dot, phi_dot = state_variables
     
@@ -74,7 +76,7 @@ def linear_system(t, state_variables, u_s, u_d):
     matrix_A[1,4] = 1
     matrix_A[2,5] = 1
 
-    matrix_A[3,2] = - u_s / m
+    matrix_A[3,2] = - g
     
     matrix_B = np.zeros((6, 2))
     
@@ -93,7 +95,7 @@ def linear_system(t, state_variables, u_s, u_d):
     return dxdt
 
 def linear_case_1():
-    u_s = m * g + 0.1
+    u_s = 0.1
     u_d = 0
     u_s_array = np.full(NUM_STEP, u_s)
     u_d_array = np.full(NUM_STEP, u_d)
@@ -102,7 +104,7 @@ def linear_case_1():
     vz.animate(sol.t, sol.y[0], sol.y[1], sol.y[2], u_s_array, u_d_array, "Système linéaire, Cas 1", FPS)
     
 def linear_case_2():
-    u_s = m * g
+    u_s = 0
     u_d = 0.01
     u_s_array = np.full(NUM_STEP, u_s)
     u_d_array = np.full(NUM_STEP, u_d)
@@ -111,14 +113,14 @@ def linear_case_2():
     vz.animate(sol.t, sol.y[0], sol.y[1], sol.y[2], u_s_array, u_d_array, "Système linéaire, Cas 2", FPS)
 
 def linear_case_3():
-    u_s = m * g
+    u_s = 0
     u_d = 0.1
     u_s_array = np.full(NUM_STEP, u_s)
     u_d_array = np.full(NUM_STEP, u_d)
     
     sol = integrate.solve_ivp(linear_system, t_span, x0, t_eval = t_eval, args = (u_s, u_d))
     vz.animate(sol.t, sol.y[0], sol.y[1], sol.y[2], u_s_array, u_d_array, "Système linéaire, Cas 3", FPS)
-    
+
 #----------------------------------------QUESTION 1.7----------------------------------------
 
 def case_conclusion():
@@ -134,14 +136,30 @@ def case_conclusion():
 #----------------------------------------QUESTION 2.1----------------------------------------
 
 def case_1m():
-    u_s = m * g + 0.223
-    u_d = 0
-    u_s_array = np.full(NUM_STEP, u_s)
-    u_d_array = np.full(NUM_STEP, u_d)
+    def u_s_func(t):
+        if t < 1.0:
+            return m * g + 1.0
+        elif t < 2.0:
+            return m * g - 1.0
+        else:
+            return m * g
+            
+    def u_d_func(t):
+        return 0.0
+
+    def system_wrapper(t, y):
+        current_us = u_s_func(t)
+        current_ud = u_d_func(t)
+        return system(t, y, current_us, current_ud)
+
+    t_array = np.linspace(0, t_span[1], NUM_STEP)
+    u_s_array = np.array([u_s_func(t) for t in t_array])
+    u_d_array = np.array([u_d_func(t) for t in t_array])
     
-    sol = integrate.solve_ivp(system, t_span, x0, t_eval = t_eval, args = (u_s, u_d))
+    sol = integrate.solve_ivp(system_wrapper, t_span, x0, t_eval=t_eval)
+    
     vz.animate(sol.t, sol.y[0], sol.y[1], sol.y[2], u_s_array, u_d_array, "Système non-linéaire, 1m vertical", FPS)
-    
+
 def systemInputsVariables(t, state_variables, u_s, u_d):
     step = min(int(t / ((t_end - t_start) / NUM_STEP)), NUM_STEP - 1)
     
@@ -155,18 +173,43 @@ def systemInputsVariables(t, state_variables, u_s, u_d):
     
     return [x_dot, y_dot, phi_dot, x_ddot, y_ddot, phi_ddot]
     
-def case_noisy():
-    u_s = m * g + 0.223
-    u_d = 0
-    
-    mean = 0
-    std = 1
+def case_1m_noisy():
+    mean = 0.0
+    std = np.sqrt(2) * 0.05
 
-    u_s_array = np.random.normal(mean, std, NUM_STEP) + u_s
-    u_d_array = np.random.normal(mean, std, NUM_STEP) + u_d
+    def u_s_base(t):
+        if t < 1.0:
+            return m * g + 1.0
+        elif t < 2.0:
+            return m * g - 1.0
+        else:
+            return m * g
+            
+    def u_d_base(t):
+        return 0.0
+
+    t_array = np.linspace(0, t_span[1], NUM_STEP)
     
-    sol = integrate.solve_ivp(systemInputsVariables, t_span, x0, t_eval = t_eval, args = (u_s_array, u_d_array))
-    vz.animate(sol.t, sol.y[0], sol.y[1], sol.y[2], u_s_array, u_d_array, "Système non-linéaire avec bruit gaussien", FPS)
+    u_s_clean = np.array([u_s_base(t) for t in t_array])
+    u_d_clean = np.array([u_d_base(t) for t in t_array])
+    
+    u_s_noisy_array = u_s_clean + np.random.normal(mean, std, NUM_STEP)
+    u_d_noisy_array = u_d_clean + np.random.normal(mean, std, NUM_STEP)
+    
+    u_s_interp = interp1d(t_array, u_s_noisy_array, bounds_error=False, fill_value="extrapolate")
+    u_d_interp = interp1d(t_array, u_d_noisy_array, bounds_error=False, fill_value="extrapolate")
+
+    def system_wrapper(t, y):
+        current_us = u_s_interp(t)
+        current_ud = u_d_interp(t)
+        return system(t, y, current_us, current_ud) 
+
+    sol = integrate.solve_ivp(system_wrapper, t_span, x0, t_eval=t_eval)
+ 
+    u_s_sol_array = u_s_interp(sol.t)
+    u_d_sol_array = u_d_interp(sol.t)
+    
+    vz.animate(sol.t, sol.y[0], sol.y[1], sol.y[2], u_s_sol_array, u_d_sol_array, "1m vertical avec bruit", FPS)
     
 #----------------------------------------QUESTION 2.5----------------------------------------
 
@@ -511,7 +554,7 @@ def feedbacked_noisy_system(t, state_variables, k_x, k_y, k_phi):
 def q2_8():
     k_x = 11
     k_y = 11
-    k_phi = 44
+    k_phi = 67
     
     t_start = 0
     t_end = 10 * np.pi
@@ -544,3 +587,171 @@ def q2_8():
     rmse = np.sqrt(1/NUM_STEP * square_sum)
     print(rmse)
     vz.animate(t_sol, x_sol, y_sol, phi_sol, u_s_array, u_d_array, "Q2.8", FPS)
+
+
+#----------------------------------------QUESTION 3.3----------------------------------------
+
+x0 = np.array([1, 1.5, 0, 0, 0, 0])
+
+
+def q3_3_case1():
+    k_x = 5
+    k_y = 5
+    k_crit = 20
+    k_phi = 0.99 * k_crit
+    
+    mean = 0
+    std = 0
+    
+    t_start = 0
+    t_end = 30
+    t_span = (t_start, t_end)
+    t_eval = np.linspace(t_start, t_end, NUM_STEP)
+    
+    sol = integrate.solve_ivp(feedbacked_system, t_span, x0, t_eval = t_eval, args = (k_x, k_y, k_phi, mean, std))
+    
+    x_sol = sol.y[0]
+    y_sol = sol.y[1]
+    phi_sol = sol.y[2]
+    t_sol = sol.t
+    
+    x_ref = r * np.cos(omega * t_sol)
+    y_ref = r * np.sin(omega * t_sol) + 1.5
+    
+    u_s_array = m * (g + k_y * (y_ref - y_sol))
+    u_d_array = 2 * inertia / l * k_phi * (- 1/g * k_x * (x_ref - x_sol) - phi_sol)
+    
+    for i in range(len(t_sol)):
+        seed = int(t_sol[i] * 1000)
+        
+        u_s_array[i] += np.random.default_rng(seed).normal(mean, std)
+        u_d_array[i] += np.random.default_rng(seed + 1).normal(mean, std)
+    
+    vz.animate(t_sol, x_sol, y_sol, phi_sol, u_s_array, u_d_array, "Q3.3 Cas 1", FPS)
+    
+    for i in range(NUM_STEP):
+        square_sum = 0
+        square_sum += (x_sol[i] - x_ref[i])**2 + (y_sol[i] - y_ref[i])**2
+    
+    rmse = np.sqrt(1/NUM_STEP * square_sum)
+    print(rmse)
+
+
+
+def q3_3_case2():
+    k_x = 5
+    k_y = 5
+    k_crit = 20
+    k_phi = 1.01 * k_crit
+    
+    mean = 0
+    std = 0
+    
+    t_start = 0
+    t_end = 30
+    t_span = (t_start, t_end)
+    t_eval = np.linspace(t_start, t_end, NUM_STEP)
+    
+    sol = integrate.solve_ivp(feedbacked_system, t_span, x0, t_eval = t_eval, args = (k_x, k_y, k_phi, mean, std))
+    
+    x_sol = sol.y[0]
+    y_sol = sol.y[1]
+    phi_sol = sol.y[2]
+    t_sol = sol.t
+    
+    x_ref = r * np.cos(omega * t_sol)
+    y_ref = r * np.sin(omega * t_sol) + 1.5
+    
+    u_s_array = m * (g + k_y * (y_ref - y_sol))
+    u_d_array = 2 * inertia / l * k_phi * (- 1/g * k_x * (x_ref - x_sol) - phi_sol)
+    
+    for i in range(len(t_sol)):
+        seed = int(t_sol[i] * 1000)
+        
+        u_s_array[i] += np.random.default_rng(seed).normal(mean, std)
+        u_d_array[i] += np.random.default_rng(seed + 1).normal(mean, std)
+    
+    vz.animate(t_sol, x_sol, y_sol, phi_sol, u_s_array, u_d_array, "Q3.3 Cas 2", FPS)
+    
+    for i in range(NUM_STEP):
+        square_sum = 0
+        square_sum += (x_sol[i] - x_ref[i])**2 + (y_sol[i] - y_ref[i])**2
+    
+    rmse = np.sqrt(1/NUM_STEP * square_sum)
+    print(rmse)
+
+
+#----------------------------------------QUESTION 3.4----------------------------------------
+
+def bode_phase(num_coeffs, den_coeffs, omega):
+
+    poles = np.roots(den_coeffs)
+    zeros = np.roots(num_coeffs)
+    
+    phase = np.zeros_like(omega, dtype=float)
+
+    wn_poles = [np.imag(p) for p in poles if np.isclose(np.real(p), 0) and np.imag(p) > 0]
+    wn_zeros = [np.imag(z) for z in zeros if np.isclose(np.real(z), 0) and np.imag(z) > 0]
+
+    for wn in wn_poles:
+        phase[omega > wn] -= 180.0
+
+    for wn in wn_zeros:
+        phase[omega > wn] += 180.0
+        
+    return phase
+
+def bode():
+    kx = 3
+    ky = 3
+    kphi = 20
+
+    omega = np.logspace(-2, 2, 10000)
+    s = 1j * omega
+
+    H11_complex = (kphi * kx) / (s**4 + kphi * s**2 + kphi * kx)
+    num_H11 = [kphi * kx]
+    den_H11 = [1, 0, kphi, 0, kphi * kx]
+
+
+    H22_complex = ky / (s**2 + ky)
+    num_H22 = [ky]
+    den_H22 = [1, 0, ky]
+
+    fig, axes = plt.subplots(2, 2, figsize=(12, 8))
+
+    # --- Tracé H11 ---
+    axes[0, 0].semilogx(omega, 20 * np.log10(np.abs(H11_complex)))
+    axes[0, 0].set_title("Bode amplitude — H11 (xref→x)")
+    axes[0, 0].set_ylabel("Amplitude (dB)")
+    axes[0, 0].grid(True, which='both', alpha=0.3)
+
+    # Calcul explicite de la phase via les pôles
+    phase_H11 = bode_phase(num_H11, den_H11, omega)
+    axes[1, 0].semilogx(omega, phase_H11)
+    axes[1, 0].set_title("Bode phase explicite — H11 (xref→x)")
+    axes[1, 0].set_xlabel("ω (rad/s)")
+    axes[1, 0].set_ylabel("Phase (°)")
+    axes[1, 0].grid(True, which='both', alpha=0.3)
+
+    # --- Tracé H22 ---
+    axes[0, 1].semilogx(omega, 20 * np.log10(np.abs(H22_complex)))
+    axes[0, 1].set_title("Bode amplitude — H22 (yref→y)")
+    axes[0, 1].grid(True, which='both', alpha=0.3)
+
+    # Calcul explicite de la phase via les pôles
+    phase_H22 = bode_phase(num_H22, den_H22, omega)
+    axes[1, 1].semilogx(omega, phase_H22)
+    axes[1, 1].set_title("Bode phase explicite — H22 (yref→y)")
+    axes[1, 1].set_xlabel("ω (rad/s)")
+    axes[1, 1].grid(True, which='both', alpha=0.3)
+
+    plt.tight_layout()
+    plt.savefig("bode_poles_explicite.png")
+
+bode()
+
+
+#----------------------------------------QUESTION 3.5----------------------------------------
+
+

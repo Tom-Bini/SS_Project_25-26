@@ -11,7 +11,7 @@ NUM_STEP = 575
 FPS = 144
 
 t_start = 0
-t_end = 3 #secondes, la durée de simulation
+t_end = 3
 
 m = 1
 l = 0.3
@@ -213,8 +213,8 @@ def case_1m_noisy():
     
 #----------------------------------------QUESTION 2.5----------------------------------------
 
-r = 1.0 #m
-omega = 0.2 #rad/s
+r = 1.0
+omega = 0.2
 x0 = np.array([1, 1.5, 0, 0, 0, 0])
 
 def feedbacked_system(t, state_variables, k_x, k_y, k_phi, mean, std):
@@ -489,7 +489,7 @@ def q2_5_case6():
 #----------------------------------------QUESTION 2.6----------------------------------------
 
 t_start = 0
-t_end = 3 #secondes, la durée de simulation
+t_end = 3
 
 t_span = (t_start, t_end)
 t_eval = np.linspace(t_start, t_end, NUM_STEP)
@@ -511,14 +511,14 @@ def q2_6():
         
 #----------------------------------------QUESTION 2.7----------------------------------------
 
-#Fréquences dominantes
+
 freq_1 = 3
 freq_2 = 10
 freq_3 = 25
 
-amplitude_1 = 0.060
-amplitude_2 = 0.032
-amplitude_3 = 0.0320
+amplitude_1 = 0.061
+amplitude_2 = 0.030
+amplitude_3 = 0.011
 
 def artificial_noise(t):
     s1 = amplitude_1 * np.cos(2 * np.pi * freq_1 * t)  # Pic à 3 Hz
@@ -526,6 +526,39 @@ def artificial_noise(t):
     s3 = amplitude_3 * np.cos(2 * np.pi * freq_3 * t)  # Pic à 25 Hz
     
     return s1 + s2 + s3
+
+
+def q2_7_comparison():
+    t, u = np.loadtxt("mesure_poussee.csv", delimiter=",", skiprows=1).T
+
+    bruit_reel = u - 1.0 
+    bruit_modele = [artificial_noise(ti) for ti in t]
+    
+    plt.figure(figsize=(10, 5))
+    plt.plot(t, bruit_reel, label="Bruit Réel (Expérimental)", alpha=0.5)
+    plt.plot(t, bruit_modele, label="Bruit Modèle (Série de Fourier)", color='red', linewidth=2)
+    
+    plt.xlim(0, 0.5)
+    plt.xlabel("Temps (s)")
+    plt.ylabel("Force (N)")
+    plt.legend()
+    plt.grid(True, alpha=0.3)
+    plt.savefig("comparaison_temporelle_bruit.png")
+
+    plt.figure(figsize=(10, 5))
+    freqs = np.fft.rfftfreq(len(t), d=t[1]-t[0])
+    
+    ampl_reel = (2.0 / len(t)) * np.abs(np.fft.rfft(bruit_reel))
+    ampl_modele = (2.0 / len(t)) * np.abs(np.fft.rfft(bruit_modele))
+    
+    plt.plot(freqs, ampl_reel, label="Spectre Réel", alpha=0.5)
+    plt.stem(freqs, ampl_modele, linefmt='r-', markerfmt='ro', basefmt=" ", label="Pics Modèle (Q7)")
+    
+    plt.xlim(0, 40)
+    plt.xlabel("Fréquence (Hz)")
+    plt.ylabel("Amplitude")
+    plt.legend()
+    plt.savefig("comparaison_frequentielle_bruit.png")
 
 #----------------------------------------QUESTION 2.8----------------------------------------
 
@@ -749,9 +782,158 @@ def bode():
     plt.tight_layout()
     plt.savefig("bode_poles_explicite.png")
 
-bode()
-
 
 #----------------------------------------QUESTION 3.5----------------------------------------
 
+mean = 0
+std = 0
+r = 1.0
+k_x = 3
+k_y = 3
+k_phi = 20
+omega_n = np.sqrt(k_y)
 
+def feedbacked_system_2(t, state_variables, k_x, k_y, k_phi, mean, std):
+    x, y, phi, x_dot, y_dot, phi_dot = state_variables
+    
+    x_ref = 0
+    y_ref = np.sin(omega * t)
+    
+    u_s = m * (g + k_y * (y_ref - y))
+    u_d = 2 * inertia / l * k_phi * (- 1/g * k_x * (x_ref - x) - phi)
+    
+    seed = int(t * 1000)
+   
+    u_s_noisy = u_s + np.random.default_rng(seed).normal(mean, std)
+    u_d_noisy = u_d + np.random.default_rng(seed + 1).normal(mean, std)
+
+    x_ddot = - u_s_noisy / m * np.sin(phi)
+    
+    y_ddot = u_s_noisy / m * np.cos(phi) - g
+    
+    phi_ddot = l / (2 * inertia) * u_d_noisy
+    
+    return [x_dot, y_dot, phi_dot, x_ddot, y_ddot, phi_ddot]
+
+
+
+def q3_5_omega_0_1():
+    global omega
+    omega = 0.1 * omega_n
+    
+    t_end = 4 * (2 * np.pi / omega)
+    t_span = (0, t_end)
+    t_eval = np.linspace(0, t_end, NUM_STEP)
+    
+    x0 = np.array([0, 0, 0, 0, (k_y * omega) / (k_y - omega ** 2), 0])
+    
+    sol = integrate.solve_ivp(feedbacked_system_2, t_span, x0, t_eval=t_eval, args=(k_x, k_y, k_phi, mean, std))
+
+    x_sol = sol.y[0]
+    y_sol = sol.y[1]
+    phi_sol = sol.y[2]
+
+    x_ref = np.zeros_like(sol.t)
+    y_ref = np.sin(omega * sol.t)
+
+    u_s_array = m * (g + k_y * (y_ref - y_sol))
+    u_d_array = 2 * inertia / l * k_phi * (- 1/g * k_x * (x_ref - x_sol) - phi_sol)
+    
+    vz.animate(sol.t, x_sol, y_sol, phi_sol, u_s_array, u_d_array, "Q3.5 - Omega = 0.1 Wn", FPS)
+
+def q3_5_omega_0_5():
+    global omega
+    omega = 0.5 * omega_n
+    
+    t_end = 4 * (2 * np.pi / omega)
+    t_span = (0, t_end)
+    t_eval = np.linspace(0, t_end, NUM_STEP)
+    
+    x0 = np.array([0, 0, 0, 0, (k_y * omega) / (k_y - omega ** 2), 0])
+    
+    sol = integrate.solve_ivp(feedbacked_system_2, t_span, x0, t_eval=t_eval, args=(k_x, k_y, k_phi, mean, std))
+
+    x_sol = sol.y[0]
+    y_sol = sol.y[1]
+    phi_sol = sol.y[2]
+
+    x_ref = np.zeros_like(sol.t)
+    y_ref = np.sin(omega * sol.t)
+
+    u_s_array = m * (g + k_y * (y_ref - y_sol))
+    u_d_array = 2 * inertia / l * k_phi * (- 1/g * k_x * (x_ref - x_sol) - phi_sol)
+    
+    vz.animate(sol.t, x_sol, y_sol, phi_sol, u_s_array, u_d_array, "Q3.5 - Omega = 0.5 Wn", FPS)
+
+def q3_5_omega_1_5():
+    global omega
+    omega = 1.5 * omega_n
+    
+    t_end = 4 * (2 * np.pi / omega)
+    t_span = (0, t_end)
+    t_eval = np.linspace(0, t_end, NUM_STEP)
+    
+    x0 = np.array([0, 0, 0, 0, (k_y * omega) / (k_y - omega ** 2), 0])
+    
+    sol = integrate.solve_ivp(feedbacked_system_2, t_span, x0, t_eval=t_eval, args=(k_x, k_y, k_phi, mean, std))
+    x_sol = sol.y[0]
+    y_sol = sol.y[1]
+    phi_sol = sol.y[2]
+
+    x_ref = np.zeros_like(sol.t)
+    y_ref = np.sin(omega * sol.t)
+
+    u_s_array = m * (g + k_y * (y_ref - y_sol))
+    u_d_array = 2 * inertia / l * k_phi * (- 1/g * k_x * (x_ref - x_sol) - phi_sol)
+    
+    vz.animate(sol.t, x_sol, y_sol, phi_sol, u_s_array, u_d_array, "Q3.5 - Omega = 1.5 Wn", FPS)
+
+def q3_5_omega_3_0():
+    global omega
+    omega = 3.0 * omega_n
+    
+    t_end = 4 * (2 * np.pi / omega)
+    t_span = (0, t_end)
+    t_eval = np.linspace(0, t_end, NUM_STEP)
+    
+    x0 = np.array([0, 0, 0, 0, (k_y * omega) / (k_y - omega ** 2), 0])
+    
+    sol = integrate.solve_ivp(feedbacked_system_2, t_span, x0, t_eval=t_eval, args=(k_x, k_y, k_phi, mean, std))
+    x_sol = sol.y[0]
+    y_sol = sol.y[1]
+    phi_sol = sol.y[2]
+
+    x_ref = np.zeros_like(sol.t)
+    y_ref = np.sin(omega * sol.t)
+
+    u_s_array = m * (g + k_y * (y_ref - y_sol))
+    u_d_array = 2 * inertia / l * k_phi * (- 1/g * k_x * (x_ref - x_sol) - phi_sol)
+    
+    vz.animate(sol.t, x_sol, y_sol, phi_sol, u_s_array, u_d_array, "Q3.5 - Omega = 3.0 Wn", FPS)
+
+
+def q3_5_omega_cutoff():
+    global omega
+    omega = omega_n
+    
+    t_end = 4 * (2 * np.pi / omega)
+    t_span = (0, t_end)
+    t_eval = np.linspace(0, t_end, NUM_STEP)
+    
+    x0 = np.array([0, 0, 0, 0, 0, 0])
+    
+    sol = integrate.solve_ivp(feedbacked_system_2, t_span, x0, t_eval=t_eval, args=(k_x, k_y, k_phi, mean, std))
+    x_sol = sol.y[0]
+    y_sol = sol.y[1]
+    phi_sol = sol.y[2]
+
+    x_ref = np.zeros_like(sol.t)
+    y_ref = np.sin(omega * sol.t)
+
+    u_s_array = m * (g + k_y * (y_ref - y_sol))
+    u_d_array = 2 * inertia / l * k_phi * (- 1/g * k_x * (x_ref - x_sol) - phi_sol)
+    
+    vz.animate(sol.t, x_sol, y_sol, phi_sol, u_s_array, u_d_array, "Q3.5 - Omega = Wn", FPS)
+
+
+q3_5_omega_cutoff()
